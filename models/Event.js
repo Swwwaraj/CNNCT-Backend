@@ -42,7 +42,7 @@ const EventSchema = new mongoose.Schema({
   },
   backgroundColor: {
     type: String,
-    default: "#000000",
+    default: "#0066ff",
   },
   link: {
     type: String,
@@ -75,6 +75,9 @@ const EventSchema = new mongoose.Schema({
     default: Date.now,
   },
 })
+
+// Create index for faster queries
+EventSchema.index({ user: 1, date: 1 })
 
 // Check for event time conflicts
 EventSchema.statics.checkConflict = async function (userId, date, startTime, endTime, timeFormat, eventId = null) {

@@ -30,12 +30,17 @@ const allowedOrigins = [
 
 const cors = require("cors");
 
+const cors = require("cors");
+
 app.use(
   cors({
-    origin: ["https://cnnct-git-main-swarajs-projects-4b6703ae.vercel.app"],
+    origin: "https://cnnct-git-main-swarajs-projects-4b6703ae.vercel.app",
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type,Authorization",
     credentials: true,
   })
 );
+
 
 
 // ✅ Handle Preflight Requests

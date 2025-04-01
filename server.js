@@ -26,20 +26,28 @@ const app = express();
 // Middleware to parse JSON body
 app.use(express.json());
 
-// Enable CORS with proper configuration
+//  CORS Middleware (Force Headers)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*"); // Allow all origins
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+//  Also enable cors() middleware
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://cnnct-sigma.vercel.app"], // Ensure this matches your Vercel frontend URL
+    origin: ["http://localhost:3000", "https://cnnct-sigma.vercel.app"], // Check Vercel URL
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Handle preflight (OPTIONS) requests globally
-app.options("*", cors());
-
-// Security middleware
+//  Security middleware
 app.use(
   helmet({
     crossOriginResourcePolicy: false, // Prevents conflicts with CORS
@@ -48,7 +56,7 @@ app.use(
 app.use(mongoSanitize());
 app.use(compression());
 
-// Rate limiting to prevent abuse
+//  Rate limiting to prevent abuse
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per window
@@ -56,14 +64,14 @@ const limiter = rateLimit({
 });
 app.use("/api/", limiter);
 
-// Mount API routes
+//  Mount API routes
 app.use("/api/auth", auth);
 app.use("/api/users", users);
 app.use("/api/events", events);
 app.use("/api/availability", availability);
 app.use("/api/bookings", bookings);
 
-// Global error handling middleware
+//  Global error handling middleware
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
@@ -74,7 +82,7 @@ const server = app.listen(PORT, () => {
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err, promise) => {
-  console.log(`Error: ${err.message}`);
+  console.log(` Error: ${err.message}`);
   // Close server & exit process
   server.close(() => process.exit(1));
 });

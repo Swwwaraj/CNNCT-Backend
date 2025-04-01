@@ -26,15 +26,22 @@ const app = express()
 // Body parser
 app.use(express.json())
 
-// Enable CORS - Updated to include Vercel deployment URL
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://cnnct-git-main-swarajs-projects-4b6703ae.vercel.app"],
+    origin: ["http://localhost:3000", "https://cnnct-sigma.vercel.app"], 
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-)
+  })
+);
+
+app.options("*", cors()); 
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
 
 // Security middleware
 app.use(helmet())

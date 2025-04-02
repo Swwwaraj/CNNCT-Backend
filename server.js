@@ -26,37 +26,44 @@ const app = express();
 // Middleware to parse JSON body
 app.use(express.json());
 
-//  CORS Middleware (Force Headers)
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*"); // Allow all origins
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// Allowed origins
+const allowedOrigins = ["http://localhost:3000", "https://cnnct-sigma.vercel.app"];
 
-//  Also enable cors() middleware
+// Enable CORS middleware
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://cnnct-sigma.vercel.app"], // Check Vercel URL
-    credentials: true,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // Allow cookies & authorization headers
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-//  Security middleware
+// Properly handle preflight requests
+app.options("*", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(200);
+});
+
+// Security middleware
 app.use(
   helmet({
-    crossOriginResourcePolicy: false, // Prevents conflicts with CORS
+    crossOriginResourcePolicy: false, // Prevent conflicts with CORS
   })
 );
 app.use(mongoSanitize());
 app.use(compression());
 
-//  Rate limiting to prevent abuse
+// Rate limiting to prevent abuse
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per window
@@ -64,14 +71,14 @@ const limiter = rateLimit({
 });
 app.use("/api/", limiter);
 
-//  Mount API routes
+// Mount API routes
 app.use("/api/auth", auth);
 app.use("/api/users", users);
 app.use("/api/events", events);
 app.use("/api/availability", availability);
 app.use("/api/bookings", bookings);
 
-//  Global error handling middleware
+// Global error handling middleware
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
@@ -83,6 +90,5 @@ const server = app.listen(PORT, () => {
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err, promise) => {
   console.log(` Error: ${err.message}`);
-  // Close server & exit process
   server.close(() => process.exit(1));
 });
